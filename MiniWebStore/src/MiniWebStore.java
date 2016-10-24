@@ -62,7 +62,7 @@ class MiniWebStore implements Serializable {
 	}
 	
 	void sellItem(MiniWebStoreItem item, MiniWebStoreAccount customer, long units) throws InvalidArgumentException {
-		if (units <= 0)
+		if (units <= 0L)
 			throw new InvalidArgumentException(new String[] { "Number of units to sell must be positive." });
 		else
 		{
@@ -72,8 +72,8 @@ class MiniWebStore implements Serializable {
 				if (customer.getBalance() < units * item.getUnitPrice())
 					throw new InvalidArgumentException(new String[] { "Customer does not have enough balance." });
 				else {
-					customer.modifyBalance(-1 * units * item.getUnitPrice());
-					item.modifyStock(-1 * units);
+					customer.modifyBalance(-1L * units * item.getUnitPrice());
+					item.modifyStock(-1L * units);
 					sales += units * item.getUnitPrice();
 				}
 			}

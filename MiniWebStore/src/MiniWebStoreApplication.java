@@ -17,6 +17,7 @@ public class MiniWebStoreApplication {
 	public static void main(String[] args) {
 		MiniWebStore store = new MiniWebStore();
 		UserDialog dialog = new ConsoleUserDialog();
+		//UserDialog dialog = new JOptionPaneUserDialog();
 		
 		dialog.printInfoMessage("Welcome to MiniWebStore.");
 		boolean run = true;
@@ -116,7 +117,7 @@ public class MiniWebStoreApplication {
 							else if (stockMenuChoice == 2)
 								addNewItemToStore(store, dialog);
 							else if (stockMenuChoice == 3)
-								replenishStock(store, dialog);
+								modifyItemStock(store, dialog);
 							else if (stockMenuChoice == 4)
 								removeItemFromStore(store, dialog);
 						}
@@ -144,7 +145,13 @@ public class MiniWebStoreApplication {
 					if (customerChoice == 0)
 						sessionRunning = false;
 					else if (customerChoice == 1)
-						
+						addAccountFunds(sessionUser, dialog);
+					else if (customerChoice == 2)
+						listStoreItems(store, dialog);
+					else if (customerChoice == 3)
+						buyItem(store, sessionUser, dialog);
+					else if (customerChoice == 4)
+						changePassword(sessionUser, dialog);
 				}
 			}
 		}
@@ -190,7 +197,7 @@ public class MiniWebStoreApplication {
 		store.addItem(new MiniWebStoreItem(name, unitPrice));
 	}
 	
-	private static void replenishStock(MiniWebStore store, UserDialog dialog) {
+	private static void modifyItemStock(MiniWebStore store, UserDialog dialog) {
 		int itemIndex = dialog.enterInt("Enter the item number.");
 		MiniWebStoreItem item = store.getItemByIndex(itemIndex);
 		if (item == null)
@@ -254,7 +261,48 @@ public class MiniWebStoreApplication {
 			try {
 				account.modifyBalance(amount);
 			} catch (InvalidArgumentException e) {
-				dialog.printErrorMessage("Cannot reduce account balance below zero.");
+				dialog.printErrorMessage("Cannot reduce account balance below zero. (Something went terribly wrong, please report the issue.)");
+			}
+		}
+	}
+	
+	private static void buyItem(MiniWebStore store, MiniWebStoreAccount customer, UserDialog dialog) {
+		int itemIndex = dialog.enterInt("Enter the item number.");
+		MiniWebStoreItem item = store.getItemByIndex(itemIndex);
+		if (item == null)
+			dialog.printErrorMessage("No such item.");
+		else {
+			long units = 0L;
+			boolean longEntered = false;
+			while (!longEntered) {
+				try {
+					units = Long.parseLong(dialog.enterString("How many units of the item do you want to buy?"), 10);
+					longEntered = true;
+				} catch (NumberFormatException e){
+					longEntered = false;
+				}
+			}
+			if (units <= 0L)
+				dialog.printErrorMessage("Number of units to buy must be positive.");
+			else {
+				if (item.getStock() < units)
+					dialog.printErrorMessage("Sorry, not enough units in stock.");
+				else {
+					if (customer.getBalance() < item.getUnitPrice() * units)
+						dialog.printErrorMessage("You do not have enough funds to buy " + units + " units of " + item.getName() + ".");
+					else {
+						char confirmation = dialog.enterChar("You want to buy " + units + " units of " + item.getName() + " at a unit price of " + item.getUnitPrice() / 100L + "." + item.getUnitPrice() % 100 + " for a total of " + (units * item.getUnitPrice()) / 100L + "." + (units * item.getUnitPrice()) % 100L + ". Correct? [y/n]");
+						if (confirmation == 'y' || confirmation == 'Y') {
+							try {
+								store.sellItem(item, customer, units);
+							} catch (InvalidArgumentException e) {
+								dialog.printErrorMessage(e.getMessage() + " (Something went terribly wrong, please report the issue.)");
+							}
+						}
+						else
+							dialog.printInfoMessage("Order cancelled.");
+					}
+				}
 			}
 		}
 	}
