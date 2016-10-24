@@ -9,6 +9,7 @@ import com.sun.javaws.exceptions.InvalidArgumentException;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Objects;
 
 class MiniWebStore implements Serializable {
 	private ArrayList<MiniWebStoreAccount> accounts;
@@ -38,7 +39,7 @@ class MiniWebStore implements Serializable {
 	
 	MiniWebStoreAccount findAccount(String username) {
 		for (MiniWebStoreAccount account : accounts) {
-			if (account.getUsername() == username)
+			if (Objects.equals(account.getUsername(), username))
 				return account;
 		}
 		return null;
@@ -46,20 +47,12 @@ class MiniWebStore implements Serializable {
 	
 	MiniWebStoreAccount verifyUser(String username, int password) {
 		MiniWebStoreAccount account = findAccount(username);
-		return (account.getPasswordHash() == password) ? account : null;
+		return (account != null) ? ((account.getPasswordHash() == password) ? account : null) : null;
 	}
 	
-	void addAccount(MiniWebStoreAccount account) {
-		accounts.add(account);
-	}
-	
-	void addItem(MiniWebStoreItem item) {
-		items.add(item);
-	}
-	
-	void removeItem(MiniWebStoreItem item) {
-		items.remove(item);
-	}
+	void addAccount(MiniWebStoreAccount account) { accounts.add(account); }
+	void addItem(MiniWebStoreItem item) { items.add(item); }
+	void removeItem(MiniWebStoreItem item) { items.remove(item); }
 	
 	void sellItem(MiniWebStoreItem item, MiniWebStoreAccount customer, long units) throws InvalidArgumentException {
 		if (units <= 0L)

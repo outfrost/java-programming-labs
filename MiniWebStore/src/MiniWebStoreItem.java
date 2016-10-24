@@ -40,6 +40,6 @@ public class MiniWebStoreItem implements Serializable {
 	
 	@Override
 	public String toString() {
-		return getName() + "\t" + getStock() + "\t" + getUnitPrice() / 100L + "." + getUnitPrice() % 100L;
+		return getName() + "\t" + getStock() + "\t" + FixedPointFormat.decimal2Places(getUnitPrice());
 	}
 }

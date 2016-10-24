@@ -27,9 +27,9 @@ public class MiniWebStoreApplication {
 				                                    "2> Register\n" +
 				                                    "3> Load database\n" +
 				                                    "4> Save database\n" +
-				                                    "0> Exit without saving");
+				                                    "0> Quit");
 			if (greeterChoice == 0) {
-				char confirmation = dialog.enterChar("Are you sure you want to leave without saving? [y/n]");
+				char confirmation = dialog.enterChar("Are you sure you want to quit? Any unsaved data will be lost. [y/n]");
 				if (confirmation == 'y' || confirmation == 'Y')
 					run = false;
 			}
@@ -40,7 +40,7 @@ public class MiniWebStoreApplication {
 			else if (greeterChoice == 3) {
 				String filename = dialog.enterString("Enter the name of the file to load from.");
 				try {
-					deserializeStore(store, filename);
+					store = deserializeStore(filename);
 				} catch (IOException e) {
 					dialog.printErrorMessage("Error reading database file - " + e.getMessage());
 				} catch (ClassNotFoundException e) {
@@ -107,8 +107,9 @@ public class MiniWebStoreApplication {
 							int stockMenuChoice = dialog.enterInt("Stock\n" +
 								                                      "1> List items\n" +
 								                                      "2> Add a new item\n" +
-								                                      "3> Replenish item stock\n" +
-								                                      "4> Remove an item\n" +
+								                                      "3> Modify item stock\n" +
+								                                      "4> Change item price\n" +
+								                                      "5> Remove an item\n" +
 								                                      "0> Back to store administration");
 							if (stockMenuChoice == 0)
 								inStockMenu = false;
@@ -119,12 +120,14 @@ public class MiniWebStoreApplication {
 							else if (stockMenuChoice == 3)
 								modifyItemStock(store, dialog);
 							else if (stockMenuChoice == 4)
+								changeItemPrice(store, dialog);
+							else if (stockMenuChoice == 5)
 								removeItemFromStore(store, dialog);
 						}
 					}
 					else if (adminChoice == 2) {
 						dialog.printInfoMessage("Sales up to this moment have amounted to:\n" +
-							                        store.getSales() / 100L + "." + store.getSales() % 100L);
+							                        FixedPointFormat.decimal2Places(store.getSales()));
 					}
 					else if (adminChoice == 3)
 						listStoreAccounts(store, dialog);
@@ -135,7 +138,7 @@ public class MiniWebStoreApplication {
 			else {
 				boolean sessionRunning = true;
 				while (sessionRunning) {
-					int customerChoice = dialog.enterInt("Your account balance is " + sessionUser.getBalance() / 100L + "." + sessionUser.getBalance() % 100 + ".\n" +
+					int customerChoice = dialog.enterInt("Your account balance is " + FixedPointFormat.decimal2Places(sessionUser.getBalance()) + ".\n" +
 						                                     "How can I help you today?\n" +
 						                                     "1> Add funds\n" +
 						                                     "2> List available items\n" +
@@ -166,13 +169,13 @@ public class MiniWebStoreApplication {
 		objectOutputStream.close();
 	}
 	
-	private static void deserializeStore(MiniWebStore store, String filename) throws IOException, ClassNotFoundException {
+	private static MiniWebStore deserializeStore(String filename) throws IOException, ClassNotFoundException {
 		FileInputStream fileInputStream = new FileInputStream(filename);
 		GZIPInputStream gzipInputStream = new GZIPInputStream(fileInputStream);
 		ObjectInputStream objectInputStream = new ObjectInputStream(gzipInputStream);
 		MiniWebStore loadedStore = (MiniWebStore)objectInputStream.readObject();
 		objectInputStream.close();
-		store = loadedStore;
+		return loadedStore;
 	}
 	
 	private static void listStoreAccounts(MiniWebStore store, UserDialog dialog) {
@@ -193,7 +196,7 @@ public class MiniWebStoreApplication {
 	
 	private static void addNewItemToStore(MiniWebStore store, UserDialog dialog) {
 		String name = dialog.enterString("Type a name for the new item.");
-		long unitPrice = ((long)dialog.enterDouble("Enter a unit price using '.' as decimal separator.")) * 100L;
+		long unitPrice = (long)(dialog.enterDouble("Enter a unit price using '.' as decimal separator.") * 100d);
 		store.addItem(new MiniWebStoreItem(name, unitPrice));
 	}
 	
@@ -226,6 +229,30 @@ public class MiniWebStoreApplication {
 		}
 	}
 	
+	private static void changeItemPrice(MiniWebStore store, UserDialog dialog) {
+		int itemIndex = dialog.enterInt("Enter the item number.");
+		MiniWebStoreItem item = store.getItemByIndex(itemIndex);
+		if (item == null)
+			dialog.printErrorMessage("No such item.");
+		else {
+			long newPrice = (long)(dialog.enterDouble("Current unit price is " + FixedPointFormat.decimal2Places(item.getUnitPrice()) + ". Enter new price.") * 100d);
+			if (newPrice < 0L)
+				dialog.printErrorMessage("Unit price cannot be negative.");
+			else {
+				char confirmation = dialog.enterChar("You want to change the unit price of " + itemIndex + ". " + item.getName() + " from " + FixedPointFormat.decimal2Places(item.getUnitPrice()) + " to " + FixedPointFormat.decimal2Places(newPrice) + ". Correct? [y/n]");
+				if (confirmation == 'y' || confirmation == 'Y') {
+					try {
+						item.setUnitPrice(newPrice);
+					} catch (InvalidArgumentException e) {
+						dialog.printErrorMessage(e.getMessage() + " (Something went terribly wrong, please report the issue.)");
+					}
+				}
+				else
+					dialog.printInfoMessage("Operation aborted.");
+			}
+		}
+	}
+	
 	private static void removeItemFromStore(MiniWebStore store, UserDialog dialog) {
 		int itemIndex = dialog.enterInt("Enter the item number.");
 		MiniWebStoreItem item = store.getItemByIndex(itemIndex);
@@ -254,7 +281,7 @@ public class MiniWebStoreApplication {
 	}
 	
 	private static void addAccountFunds(MiniWebStoreAccount account, UserDialog dialog) {
-		long amount = ((long)dialog.enterDouble("Enter the amount you wish to deposit using '.' as decimal separator")) * 100L;
+		long amount = (long)(dialog.enterDouble("Enter the amount you wish to deposit using '.' as decimal separator") * 100d);
 		if (amount < 0L)
 			dialog.printErrorMessage("Cannot deposit negative amounts.");
 		else {
@@ -291,7 +318,7 @@ public class MiniWebStoreApplication {
 					if (customer.getBalance() < item.getUnitPrice() * units)
 						dialog.printErrorMessage("You do not have enough funds to buy " + units + " units of " + item.getName() + ".");
 					else {
-						char confirmation = dialog.enterChar("You want to buy " + units + " units of " + item.getName() + " at a unit price of " + item.getUnitPrice() / 100L + "." + item.getUnitPrice() % 100 + " for a total of " + (units * item.getUnitPrice()) / 100L + "." + (units * item.getUnitPrice()) % 100L + ". Correct? [y/n]");
+						char confirmation = dialog.enterChar("You want to buy " + units + " units of " + item.getName() + " at a unit price of " + FixedPointFormat.decimal2Places(item.getUnitPrice()) + " for a total of " + FixedPointFormat.decimal2Places(units * item.getUnitPrice()) + ". Correct? [y/n]");
 						if (confirmation == 'y' || confirmation == 'Y') {
 							try {
 								store.sellItem(item, customer, units);
