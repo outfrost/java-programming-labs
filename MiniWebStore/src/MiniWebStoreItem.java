@@ -14,10 +14,10 @@ public class MiniWebStoreItem implements Serializable {
 	private long unitPrice;
 	private long stock;
 	
-	public MiniWebStoreItem(String name, long unitPrice, long stock) {
+	public MiniWebStoreItem(String name, long unitPrice) {
 		this.name = name;
 		this.unitPrice = unitPrice;
-		this.stock = stock;
+		this.stock = 0L;
 	}
 	
 	public String getName() { return name; }
@@ -40,6 +40,6 @@ public class MiniWebStoreItem implements Serializable {
 	
 	@Override
 	public String toString() {
-		return getName() + "\t" + getStock() + "\t" + getUnitPrice();
+		return getName() + "\t" + getStock() + "\t" + getUnitPrice() / 100L + "." + getUnitPrice() % 100L;
 	}
 }

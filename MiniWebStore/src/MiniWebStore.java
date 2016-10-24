@@ -26,6 +26,16 @@ class MiniWebStore implements Serializable {
 	ArrayList<MiniWebStoreAccount> getAccounts() { return new ArrayList<>(accounts); }
 	long getSales() { return sales; }
 	
+	MiniWebStoreItem getItemByIndex(int index) {
+		MiniWebStoreItem item;
+		try {
+			item = items.get(index);
+		} catch (IndexOutOfBoundsException e) {
+			item = null;
+		}
+		return item;
+	}
+	
 	MiniWebStoreAccount findAccount(String username) {
 		for (MiniWebStoreAccount account : accounts) {
 			if (account.getUsername() == username)
@@ -67,14 +77,6 @@ class MiniWebStore implements Serializable {
 					sales += units * item.getUnitPrice();
 				}
 			}
-		}
-	}
-	
-	void replenishItemStock(MiniWebStoreItem item, long units) throws InvalidArgumentException {
-		if (units <= 0)
-			throw new InvalidArgumentException(new String[] { "Number of units to replenish must be positive." });
-		else {
-			item.modifyStock(units);
 		}
 	}
 }
