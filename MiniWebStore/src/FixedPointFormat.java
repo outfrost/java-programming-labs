@@ -1,8 +1,8 @@
 /*
- *  MiniWebStoreItem - serializable class for sellable item management
+ *  FixedPointFormat - simple shortcut class for printing integers formatted with 2 decimal places
  *
  *  Author: Iwo Bujkiewicz
- *  Date: 22 Oct 2016
+ *  Date: 24 Oct 2016
  */
 
 public class FixedPointFormat {
