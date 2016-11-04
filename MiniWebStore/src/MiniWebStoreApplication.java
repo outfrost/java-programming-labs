@@ -5,15 +5,24 @@
  *  Date: 22 Oct 2016
  */
 
-import com.sun.javaws.exceptions.InvalidArgumentException;
-
 import java.io.*;
 import java.util.ArrayList;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+/**
+ * Main class of the MiniWebStore application.
+ * Controls the data model and the user interface.
+ *
+ * @author  Iwo Bujkiewicz
+ * @version 20161101
+ */
 public class MiniWebStoreApplication {
 	
+	/**
+	 * Runs the application synchronously when executed.
+	 * @param args  Arguments provided through the console command; not yet in use
+	 */
 	public static void main(String[] args) {
 		MiniWebStore store = new MiniWebStore();
 		UserDialog dialog = new ConsoleUserDialog();
@@ -59,6 +68,11 @@ public class MiniWebStoreApplication {
 		
 	}
 	
+	/**
+	 * Prompts the user to register a new account in a store.
+	 * @param dialog    Instantiated user dialog implementation to use
+	 * @param store     Store to register in
+	 */
 	private static void registerNewAccount(UserDialog dialog, MiniWebStore store) {
 		String username = dialog.enterString("Choose a username. You will use it to sign in.");
 		if (username.length() < 3) {
@@ -81,6 +95,11 @@ public class MiniWebStoreApplication {
 		}
 	}
 	
+	/**
+	 * Prompts the user to sign in to their account and perform store actions once signed in.
+	 * @param dialog    Instantiated user dialog implementation to use
+	 * @param store     Store to sign into
+	 */
 	private static void startUserSession(UserDialog dialog, MiniWebStore store) {
 		String username = dialog.enterString("Enter username");
 		int password = dialog.enterString("Enter password").hashCode();
@@ -160,6 +179,12 @@ public class MiniWebStoreApplication {
 		}
 	}
 	
+	/**
+	 * Puts a store object through a gzip pipeline and writes it to a binary file.
+	 * @param store     Store to serialize
+	 * @param filename  Name (with extension) of the file to write
+	 * @throws IOException  If the file exists but is a directory instead of a regular file, does not exist and cannot be created, cannot be opened, write access to it is denied, a different I/O error occurs, or there is a problem with the store being serialized
+	 */
 	private static void serializeStore(MiniWebStore store, String filename) throws IOException {
 		FileOutputStream fileOutputStream = new FileOutputStream(filename);
 		GZIPOutputStream gzipOutputStream = new GZIPOutputStream(fileOutputStream);
@@ -169,6 +194,13 @@ public class MiniWebStoreApplication {
 		objectOutputStream.close();
 	}
 	
+	/**
+	 * Reads a store object from a binary file through a gzip pipeline.
+	 * @param filename  Name (with extension) of the file to read from
+	 * @return          Store object loaded from the file
+	 * @throws IOException              If the file does not exist, exists but is a directory instead of a regular file, cannot be opened, read access to it is denied, or a different I/O error occurs
+	 * @throws ClassNotFoundException   If the file does not contain an object of the {@link MiniWebStore} class, or any object data at all
+	 */
 	private static MiniWebStore deserializeStore(String filename) throws IOException, ClassNotFoundException {
 		FileInputStream fileInputStream = new FileInputStream(filename);
 		GZIPInputStream gzipInputStream = new GZIPInputStream(fileInputStream);
@@ -178,6 +210,11 @@ public class MiniWebStoreApplication {
 		return loadedStore;
 	}
 	
+	/**
+	 * Prints a list of registered accounts in a store.
+	 * @param store     Store to read from
+	 * @param dialog    Instantiated user dialog implementation to use
+	 */
 	private static void listStoreAccounts(MiniWebStore store, UserDialog dialog) {
 		StringBuilder listBuilder = new StringBuilder("Name\tAddress\tAccount balance\tAdmin privileges\n");
 		ArrayList<MiniWebStoreAccount> accounts = store.getAccounts();
@@ -186,6 +223,11 @@ public class MiniWebStoreApplication {
 		dialog.printMessage(listBuilder.toString());
 	}
 	
+	/**
+	 * Prints a list of items available in a store.
+	 * @param store     Store to read from
+	 * @param dialog    Instantiated user dialog implementation to use
+	 */
 	private static void listStoreItems(MiniWebStore store, UserDialog dialog) {
 		StringBuilder listBuilder = new StringBuilder("#  Item name\tStock\tUnit price\n");
 		ArrayList<MiniWebStoreItem> items = store.getItems();
@@ -194,12 +236,25 @@ public class MiniWebStoreApplication {
 		dialog.printMessage(listBuilder.toString());
 	}
 	
+	/**
+	 * Prompts the user to add a new item to a store.
+	 * @param store     Store to add the item to
+	 * @param dialog    Instantiated user dialog implementation to use
+	 */
 	private static void addNewItemToStore(MiniWebStore store, UserDialog dialog) {
 		String name = dialog.enterString("Type a name for the new item.");
 		long unitPrice = (long)(dialog.enterDouble("Enter a unit price using '.' as decimal separator.") * 100d);
-		store.addItem(new MiniWebStoreItem(name, unitPrice));
+		if (unitPrice >= 0L)
+			store.addItem(new MiniWebStoreItem(name, unitPrice));
+		else
+			dialog.printErrorMessage("Unit price cannot be negative.");
 	}
 	
+	/**
+	 * Prompts the user to modify the number of units of an item in stock.
+	 * @param store     Store to modify an item in
+	 * @param dialog    Instantiated user dialog implementation to use
+	 */
 	private static void modifyItemStock(MiniWebStore store, UserDialog dialog) {
 		int itemIndex = dialog.enterInt("Enter the item number.");
 		MiniWebStoreItem item = store.getItemByIndex(itemIndex);
@@ -220,7 +275,7 @@ public class MiniWebStoreApplication {
 			if (confirmation == 'y' || confirmation == 'Y') {
 				try {
 					item.modifyStock(stockToAdd);
-				} catch (InvalidArgumentException e) {
+				} catch (IllegalArgumentException e) {
 					dialog.printErrorMessage("Cannot reduce item stock below zero.");
 				}
 			}
@@ -229,6 +284,11 @@ public class MiniWebStoreApplication {
 		}
 	}
 	
+	/**
+	 * Prompts the user to change the unit price of an item.
+	 * @param store     Store to modify an item in
+	 * @param dialog    Instantiated user dialog implementation to use
+	 */
 	private static void changeItemPrice(MiniWebStore store, UserDialog dialog) {
 		int itemIndex = dialog.enterInt("Enter the item number.");
 		MiniWebStoreItem item = store.getItemByIndex(itemIndex);
@@ -243,7 +303,7 @@ public class MiniWebStoreApplication {
 				if (confirmation == 'y' || confirmation == 'Y') {
 					try {
 						item.setUnitPrice(newPrice);
-					} catch (InvalidArgumentException e) {
+					} catch (IllegalArgumentException e) {
 						dialog.printErrorMessage(e.getMessage() + " (Something went terribly wrong, please report the issue.)");
 					}
 				}
@@ -253,6 +313,11 @@ public class MiniWebStoreApplication {
 		}
 	}
 	
+	/**
+	 * Promts the user to completely remove an item from a store.
+	 * @param store     Store to remove an item from
+	 * @param dialog    Instantiated user dialog implementation to use
+	 */
 	private static void removeItemFromStore(MiniWebStore store, UserDialog dialog) {
 		int itemIndex = dialog.enterInt("Enter the item number.");
 		MiniWebStoreItem item = store.getItemByIndex(itemIndex);
@@ -267,6 +332,11 @@ public class MiniWebStoreApplication {
 		}
 	}
 	
+	/**
+	 * Prompts the user to change their password.
+	 * @param account   The user's account
+	 * @param dialog    Instantiated user dialog implementation to use
+	 */
 	private static void changePassword(MiniWebStoreAccount account, UserDialog dialog) {
 		int currentPassword = dialog.enterString("Enter your current password.").hashCode();
 		if (currentPassword != account.getPasswordHash())
@@ -280,6 +350,11 @@ public class MiniWebStoreApplication {
 		}
 	}
 	
+	/**
+	 * Prompts the user to add funds to their account balance.
+	 * @param account   The user's account
+	 * @param dialog    Instantiated user dialog implementation to use
+	 */
 	private static void addAccountFunds(MiniWebStoreAccount account, UserDialog dialog) {
 		long amount = (long)(dialog.enterDouble("Enter the amount you wish to deposit using '.' as decimal separator") * 100d);
 		if (amount < 0L)
@@ -287,12 +362,18 @@ public class MiniWebStoreApplication {
 		else {
 			try {
 				account.modifyBalance(amount);
-			} catch (InvalidArgumentException e) {
+			} catch (IllegalArgumentException e) {
 				dialog.printErrorMessage("Cannot reduce account balance below zero. (Something went terribly wrong, please report the issue.)");
 			}
 		}
 	}
 	
+	/**
+	 * Prompts the user to buy an item from a store.
+	 * @param store     Store to buy from
+	 * @param customer  The customer's account
+	 * @param dialog    Instantiated user dialog implementation to use
+	 */
 	private static void buyItem(MiniWebStore store, MiniWebStoreAccount customer, UserDialog dialog) {
 		int itemIndex = dialog.enterInt("Enter the item number.");
 		MiniWebStoreItem item = store.getItemByIndex(itemIndex);
@@ -322,7 +403,7 @@ public class MiniWebStoreApplication {
 						if (confirmation == 'y' || confirmation == 'Y') {
 							try {
 								store.sellItem(item, customer, units);
-							} catch (InvalidArgumentException e) {
+							} catch (IllegalArgumentException e) {
 								dialog.printErrorMessage(e.getMessage() + " (Something went terribly wrong, please report the issue.)");
 							}
 						}

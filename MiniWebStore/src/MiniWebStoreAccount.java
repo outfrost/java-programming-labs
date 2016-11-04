@@ -5,22 +5,18 @@
  *  Date: 22 Oct 2016
  */
 
-import com.sun.istack.internal.Nullable;
-import com.sun.javaws.exceptions.InvalidArgumentException;
-
 import java.io.Serializable;
-import java.lang.annotation.Annotation;
 import java.util.UUID;
 
 /**
- * Represents a single user account in the store.
+ * Provides an object representation of a single user account in a store.
  *
  * Contains information about the account's UUID, username, password hash, user's full name, user's street address, the account's monetary balance, and if the account has administrator privileges.
  *
  * Class is serializable.
  *
  * @author  Iwo Bujkiewicz
- * @version 20161026
+ * @version 20161101
  */
 public class MiniWebStoreAccount implements Serializable {
 	private UUID id;
@@ -60,7 +56,7 @@ public class MiniWebStoreAccount implements Serializable {
 	 * Address is set to 'MiniWebStore'.
 	 * Balance is set to 0.
 	 * Administrative privileges are GRANTED if the input parameter is set to true.
-	 * @param adminAccount  Indicates whether the resulting account hould have administrative privileges
+	 * @param adminAccount  Indicates whether the resulting account should have administrative privileges
 	 */
 	public MiniWebStoreAccount(boolean adminAccount) {
 		this.id = UUID.randomUUID();
@@ -97,13 +93,13 @@ public class MiniWebStoreAccount implements Serializable {
 	 * Modifies the account's balance by the provided amount.
 	 * Prevents the account's balance from becoming negative.
 	 * @param value The amount to add to the balance (can be negative)
-	 * @throws InvalidArgumentException Thrown when the account's balance would become negative after the operation
+	 * @throws IllegalArgumentException Thrown when the account's balance would become negative after the operation
 	 */
-	public void modifyBalance(long value) throws InvalidArgumentException {
+	public void modifyBalance(long value) throws IllegalArgumentException {
 		if (balance + value >= 0L)
 			balance += value;
 		else
-			throw new InvalidArgumentException(new String[]{"Balance cannot be negative"});
+			throw new IllegalArgumentException("Balance cannot be negative");
 	}
 	
 	@Override
