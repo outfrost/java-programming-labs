@@ -22,8 +22,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
-import static java.awt.event.KeyEvent.VK_UP;
-
 
 abstract class Figure {
 	
@@ -306,6 +304,16 @@ class Line extends Figure {
 	
 	private Point start, end;
 	
+	Line() {
+		this.start = new Point();
+		this.end = new Point();
+	}
+	
+	Line(Point start, Point end) {
+		this.start = start;
+		this.end = end;
+	}
+	
 	// Metoda używa promienia chwytania wskaźnika myszy zdefiniowanego dla punktu.
 	@Override
 	public boolean isInside(float px, float py) {
@@ -370,8 +378,8 @@ class Rectangle extends Figure {
 	
 	Rectangle() {
 		this.start = new Point();
-		this.width = random.nextFloat();
-		this.height = random.nextFloat();
+		this.width = random.nextFloat() * 200;
+		this.height = random.nextFloat() * 200;
 	}
 	
 	Rectangle(Point start, float width, float height) {
@@ -417,8 +425,11 @@ class Rectangle extends Figure {
 	
 	@Override
 	void scale(float s) {
-		width *= s;
-		height *= s;
+		float widthDiff = 0.5f * (s - 1) * width;
+		float heightDiff = 0.5f * (s - 1) * height;
+		start.move(-widthDiff, -heightDiff);
+		width += widthDiff;
+		height += heightDiff;
 	}
 	
 	@Override
@@ -435,8 +446,8 @@ class Ellipse extends Figure {
 	
 	Ellipse() {
 		start = new Point();
-		width = random.nextFloat();
-		height = random.nextFloat();
+		width = random.nextFloat() * 150;
+		height = random.nextFloat() * 150;
 	}
 	
 	Ellipse(Point start, float width, float height) {
@@ -482,8 +493,11 @@ class Ellipse extends Figure {
 	
 	@Override
 	void scale(float s) {
-		width *= s;
-		height *= s;
+		float widthDiff = 0.5f * (s - 1) * width;
+		float heightDiff = 0.5f * (s - 1) * height;
+		start.move(-widthDiff, -heightDiff);
+		width += widthDiff;
+		height += heightDiff;
 	}
 	
 	@Override
@@ -495,8 +509,6 @@ class Ellipse extends Figure {
 
 
 class Picture extends JPanel implements KeyListener, MouseListener, MouseMotionListener {
-	
-	private static final long serialVersionUID = 1L;
 		
 	Vector<Figure> figures = new Vector<Figure>();
 	private int lastMousePosX, lastMousePosY;
@@ -539,6 +551,16 @@ class Picture extends JPanel implements KeyListener, MouseListener, MouseMotionL
 		repaint();
 	}
 	
+	void removeAllSelectedFigures() {
+		Iterator<Figure> i = figures.iterator();
+		while (i.hasNext()) {
+			Figure figure = i.next();
+			if (figure.isSelected())
+				i.remove();
+		}
+		repaint();
+	}
+	
 	public String toString() {
 		String str = "Rysunek{ ";
 		for (Figure f : figures)
@@ -558,7 +580,7 @@ class Picture extends JPanel implements KeyListener, MouseListener, MouseMotionL
 		if (keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_DOWN || keyCode == KeyEvent.VK_LEFT || keyCode == KeyEvent.VK_RIGHT || keyCode == KeyEvent.VK_DELETE) {
 			int dist = evt.isShiftDown() ? 10 : 1;
 			switch (keyCode) {
-				case VK_UP:
+				case KeyEvent.VK_UP:
 					moveAllSelectedFigures(0, -dist);
 					break;
 				case KeyEvent.VK_DOWN:
@@ -571,13 +593,7 @@ class Picture extends JPanel implements KeyListener, MouseListener, MouseMotionL
 					moveAllSelectedFigures(dist, 0);
 					break;
 				case KeyEvent.VK_DELETE:
-					Iterator<Figure> i = figures.iterator();
-					while (i.hasNext()) {
-						Figure figure = i.next();
-						if (figure.isSelected())
-							i.remove();
-					}
-					repaint();
+					removeAllSelectedFigures();
 					break;
 			}
 		}
@@ -636,19 +652,16 @@ class Picture extends JPanel implements KeyListener, MouseListener, MouseMotionL
 		repaint();
 	}
 	
-	public void mouseEntered(MouseEvent e) {
-	}
+	public void mouseEntered(MouseEvent e) { }
 	
-	public void mouseExited(MouseEvent e) {
-	}
+	public void mouseExited(MouseEvent e) {	}
 	
 	public void mousePressed(MouseEvent e) {
 		lastMousePosX = e.getX();
 		lastMousePosY = e.getY();
 	}
 	
-	public void mouseReleased(MouseEvent e) {
-	}
+	public void mouseReleased(MouseEvent e) { }
 	
 	public void mouseDragged(MouseEvent e) {
 		moveAllSelectedFigures((float)e.getX() - lastMousePosX, (float)e.getY() - lastMousePosY);
@@ -656,17 +669,12 @@ class Picture extends JPanel implements KeyListener, MouseListener, MouseMotionL
 		lastMousePosY = e.getY();
 	}
 	
-	public void mouseMoved(MouseEvent e) {
-		
-	}
+	public void mouseMoved(MouseEvent e) { }
 }
 
 
+
 public class GraphicEditor extends JFrame implements ActionListener {
-	
-	
-	private static final long serialVersionUID = 3727471814914970170L;
-	
 	
 	private final String DESCRIPTION = "OPIS PROGRAMU\n\n" + "Aktywna klawisze:\n"
 		                                   + "   strzalki ==> przesuwanie figur\n"
@@ -680,13 +688,16 @@ public class GraphicEditor extends JFrame implements ActionListener {
 		                                   + "   ALT + klik ==> zmiana zaznaczenia figur\n"
 		                                   + "   przeciaganie ==> przesuwanie figur";
 	
+	private final String AUTHOR = "Autor: Paweł Rogaliński, Iwo Bujkiewicz";
+	
 	
 	protected Picture picture;
 	
-	private JMenu[] menu = {new JMenu("Figury"),
-		new JMenu("Edytuj")};
+	private JMenu[] menu = { new JMenu("Figury"),
+		new JMenu("Edytuj"),
+		new JMenu("Pomoc") };
 	
-	private JMenuItem[] items = {new JMenuItem("Punkt"),
+	private JMenuItem[] items = { new JMenuItem("Punkt"),
 		new JMenuItem("Kolo"),
 		new JMenuItem("Trojkat"),
 		new JMenuItem("Wypisz wszystkie"),
@@ -694,12 +705,21 @@ public class GraphicEditor extends JFrame implements ActionListener {
 		new JMenuItem("Przesun w dol"),
 		new JMenuItem("Powieksz"),
 		new JMenuItem("Pomniejsz"),
-	};
+		new JMenuItem("Linia"),
+		new JMenuItem("Prostokąt"),
+		new JMenuItem("Elipsa"),
+		new JMenuItem("Przesun w lewo"),
+		new JMenuItem("Przesun w prawo"),
+		new JMenuItem("Usun"),
+		new JMenuItem("Opis programu"),
+		new JMenuItem("Autor") };
 	
 	private JButton buttonPoint = new JButton("Punkt");
 	private JButton buttonCircle = new JButton("Kolo");
 	private JButton buttonTriangle = new JButton("Trojkat");
-	
+	private JButton buttonLine = new JButton("Linia");
+	private JButton buttonRectangle = new JButton("Prostokat");
+	private JButton buttonEllpise = new JButton("Elipsa");
 	
 	public GraphicEditor() {
 		super("Edytor graficzny");
@@ -711,17 +731,26 @@ public class GraphicEditor extends JFrame implements ActionListener {
 		
 		// dodanie opcji do menu "Figury"
 		menu[0].add(items[0]);
+		menu[0].add(items[8]);
 		menu[0].add(items[1]);
 		menu[0].add(items[2]);
+		menu[0].add(items[9]);
+		menu[0].add(items[10]);
 		menu[0].addSeparator();
 		menu[0].add(items[3]);
 		
 		// dodanie opcji do menu "Edytuj"
 		menu[1].add(items[4]);
 		menu[1].add(items[5]);
+		menu[1].add(items[11]);
+		menu[1].add(items[12]);
+		menu[1].add(items[13]);
 		menu[1].addSeparator();
 		menu[1].add(items[6]);
 		menu[1].add(items[7]);
+		
+		menu[2].add(items[14]);
+		menu[2].add(items[15]);
 		
 		// dodanie do okna paska menu
 		JMenuBar menubar = new JMenuBar();
@@ -739,10 +768,18 @@ public class GraphicEditor extends JFrame implements ActionListener {
 		buttonPoint.addActionListener(this);
 		buttonCircle.addActionListener(this);
 		buttonTriangle.addActionListener(this);
+		buttonLine.addActionListener(this);
+		buttonRectangle.addActionListener(this);
+		buttonEllpise.addActionListener(this);
 		
 		picture.add(buttonPoint);
 		picture.add(buttonCircle);
 		picture.add(buttonTriangle);
+		picture.add(buttonLine);
+		picture.add(buttonRectangle);
+		picture.add(buttonEllpise);
+		
+		// ^ Programista płakał jak commitował
 		
 		setContentPane(picture);
 		setVisible(true);
@@ -755,15 +792,27 @@ public class GraphicEditor extends JFrame implements ActionListener {
 			picture.addFigure(new Point());
 		if (zrodlo == buttonCircle)
 			picture.addFigure(new Circle());
+		if (zrodlo == buttonRectangle)
+			picture.addFigure(new Rectangle());
+		if (zrodlo == buttonLine)
+			picture.addFigure(new Line());
 		if (zrodlo == buttonTriangle)
 			picture.addFigure(new Triangle());
+		if (zrodlo == buttonEllpise)
+			picture.addFigure(new Ellipse());
 		
 		if (zrodlo == items[0])
 			picture.addFigure(new Point());
 		if (zrodlo == items[1])
 			picture.addFigure(new Circle());
+		if (zrodlo == items[8])
+			picture.addFigure(new Line());
 		if (zrodlo == items[2])
 			picture.addFigure(new Triangle());
+		if (zrodlo == items[10])
+			picture.addFigure(new Ellipse());
+		if (zrodlo == items[9])
+			picture.addFigure(new Rectangle());
 		if (zrodlo == items[3])
 			JOptionPane.showMessageDialog(null, picture.toString());
 		
@@ -775,6 +824,16 @@ public class GraphicEditor extends JFrame implements ActionListener {
 			picture.scaleAllSelectedFigures(1.1f);
 		if (zrodlo == items[7])
 			picture.scaleAllSelectedFigures(0.9f);
+		if (zrodlo == items[11])
+			picture.moveAllSelectedFigures(-10, 0);
+		if (zrodlo == items[12])
+			picture.moveAllSelectedFigures(10, 0);
+		if (zrodlo == items[13])
+			picture.removeAllSelectedFigures();
+		if (zrodlo == items[14])
+			JOptionPane.showMessageDialog(null, DESCRIPTION);
+		if (zrodlo == items[15])
+			JOptionPane.showMessageDialog(null, AUTHOR);
 		
 		picture.requestFocus(); // przywrocenie ogniskowania w celu przywrocenia
 		// obslugi zadarezń pd klawiatury
