@@ -282,18 +282,11 @@ class Triangle extends Figure {
 	
 	@Override
 	void scale(float s) {
-		Point sr1 = new Point((point1.getX() + point2.getX() + point3.getX()) / 3,
-			                     (point1.getY() + point2.getY() + point3.getY()) / 3);
-		point1.scale(s);
-		point2.scale(s);                                                                                // Seriously...
-		point3.scale(s);
-		Point sr2 = new Point((point1.getX() + point2.getX() + point3.getX()) / 3,
-			                     (point1.getY() + point2.getY() + point3.getY()) / 3);
-		float dx = sr1.getX() - sr2.getX();
-		float dy = sr1.getY() - sr2.getY();
-		point1.move(dx, dy);
-		point2.move(dx, dy);
-		point3.move(dx, dy);
+		Point centre = new Point((point1.getX() + point2.getX() + point3.getX()) / 3,
+			                        (point1.getY() + point2.getY() + point3.getY()) / 3);
+		point1.move((s - 1) * (point1.getX() - centre.getX()), (s - 1) * (point1.getY() - centre.getY()));
+		point2.move((s - 1) * (point2.getX() - centre.getX()), (s - 1) * (point2.getY() - centre.getY()));
+		point3.move((s - 1) * (point3.getX() - centre.getX()), (s - 1) * (point3.getY() - centre.getY()));
 	}
 	
 	@Override
@@ -501,13 +494,12 @@ class Ellipse extends Figure {
 }
 
 
-class Picture extends JPanel implements KeyListener, MouseListener {
+class Picture extends JPanel implements KeyListener, MouseListener, MouseMotionListener {
 	
 	private static final long serialVersionUID = 1L;
-	
-	
+		
 	Vector<Figure> figures = new Vector<Figure>();
-	
+	private int lastMousePosX, lastMousePosY;
 	
 	/*
 	 * UWAGA: ta metoda będzie wywoływana automatycznie przy każdej potrzebie
@@ -644,27 +636,29 @@ class Picture extends JPanel implements KeyListener, MouseListener {
 		repaint();
 	}
 	
-	public void mouseEntered(MouseEvent e)
-	//Invoked when the mouse enters a component.
-	{
+	public void mouseEntered(MouseEvent e) {
 	}
 	
-	public void mouseExited(MouseEvent e)
-	//Invoked when the mouse exits a component.
-	{
+	public void mouseExited(MouseEvent e) {
 	}
 	
-	
-	public void mousePressed(MouseEvent e)
-	// Invoked when a mouse button has been pressed on a component.
-	{
+	public void mousePressed(MouseEvent e) {
+		lastMousePosX = e.getX();
+		lastMousePosY = e.getY();
 	}
 	
-	public void mouseReleased(MouseEvent e)
-	//Invoked when a mouse button has been released on a component.
-	{
+	public void mouseReleased(MouseEvent e) {
 	}
 	
+	public void mouseDragged(MouseEvent e) {
+		moveAllSelectedFigures((float)e.getX() - lastMousePosX, (float)e.getY() - lastMousePosY);
+		lastMousePosX = e.getX();
+		lastMousePosY = e.getY();
+	}
+	
+	public void mouseMoved(MouseEvent e) {
+		
+	}
 }
 
 
@@ -739,6 +733,7 @@ public class GraphicEditor extends JFrame implements ActionListener {
 		picture.addKeyListener(picture);
 		picture.setFocusable(true);
 		picture.addMouseListener(picture);
+		picture.addMouseMotionListener(picture);
 		picture.setLayout(new FlowLayout());
 		
 		buttonPoint.addActionListener(this);
