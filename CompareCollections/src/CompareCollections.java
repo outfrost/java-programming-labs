@@ -1,5 +1,5 @@
 /*
- * CompareCollections
+ * CompareCollections - an application class for visualising differences and similarities between various collection types
  *
  * Author: Iwo Bujkiewicz
  * Date: 13 Nov 2016

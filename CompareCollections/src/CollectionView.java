@@ -1,5 +1,5 @@
 /*
- * CollectionView
+ * CollectionView - a wrapper class for displaying contents of various types of collections in Swing tables
  *
  * Author: Iwo Bujkiewicz
  * Date: 13 Nov 2016
@@ -7,7 +7,7 @@
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.awt.*;
+import java.awt.Dimension;
 import java.util.Collection;
 
 final class CollectionView extends JScrollPane {
