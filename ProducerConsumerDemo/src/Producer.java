@@ -1,30 +1,31 @@
 /*
  *  Producer - a thread-based class to simulate a producer
  *
- *  Author: Paweł Rogaliński
- *  Date:   01 Oct 2009
+ *  Author: Paweł Rogaliński, Iwo Bujkiewicz
+ *  Date:   08 Dec 2016
  */
 
-class Producer extends Thread
-{
-	static char item = 'A';
+class Producer extends Worker {
 	
-	Buffer buf;
-	int number;
+	private static char item = 'A';
 	
-	public Producer(Buffer c, int number) {
-		buf = c;
-		this.number = number;
+	public Producer(Buffer buffer, int number, ProducerConsumerDemo manager) {
+		super(buffer, number, manager);
 	}
 	
 	public void run() {
 		char c;
-		while(true){
+		while(isRunning()) {
 			c = item++;
-			buf.put(number, c);
+			while (item > 'Z') item -= 26;
+			getBuffer().put(getNumber(), c);
 			try {
-				sleep((int)(Math.random() * 1000));
+				sleep((int)(Math.random() * getSleepTimeMultiplier()));
 			} catch (InterruptedException e) { }
+			if (isSuspended()) {
+				((ProducerConsumerDemo)getManager()).hold();
+				setSuspended(false);
+			}
 		}
 	}
 }

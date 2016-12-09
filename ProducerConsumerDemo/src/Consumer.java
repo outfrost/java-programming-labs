@@ -1,26 +1,26 @@
 /*
  *  Consumer - a thread-based class to simulate a consumer
  *
- *  Author: Paweł Rogaliński
- *  Date:   01 Oct 2009
+ *  Author: Paweł Rogaliński, Iwo Bujkiewicz
+ *  Date:   08 Dec 2016
  */
 
-class Consumer extends Thread
-{
-	Buffer buf;
-    int number;
+class Consumer extends Worker {
 
-	public Consumer(Buffer c, int number) {
-		buf = c;
-		this.number = number;
+	public Consumer(Buffer buffer, int number, ProducerConsumerDemo manager) {
+		super(buffer, number, manager);
 	}
 	
 	public void run() {
-		while(true){
-			buf.get(number);
+		while(isRunning()) {
+			getBuffer().get(getNumber());
 			try {
-				sleep((int)(Math.random() * 1000));
+				sleep((int)(Math.random() * getSleepTimeMultiplier()));
 			} catch (InterruptedException e) { }
+			if (isSuspended()) {
+				((ProducerConsumerDemo)getManager()).hold();
+				setSuspended(false);
+			}
 		}
 	}
 }
