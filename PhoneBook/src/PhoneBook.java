@@ -15,7 +15,7 @@ import java.util.zip.GZIPOutputStream;
 
 class PhoneBook extends ConcurrentHashMap<String, String> {
 	
-	private static final long serialVersionUID = 0L;
+	private static final long serialVersionUID = 1L;
 	
 	protected static PhoneBook load(String fileName) throws IOException, ClassNotFoundException {
 		FileInputStream fileInputStream = new FileInputStream(fileName);
@@ -26,7 +26,7 @@ class PhoneBook extends ConcurrentHashMap<String, String> {
 		return loadedPhoneBook;
 	}
 	
-	protected void save(String fileName) throws IOException {
+	protected synchronized void save(String fileName) throws IOException {
 		FileOutputStream fileOutputStream = new FileOutputStream(fileName);
 		GZIPOutputStream gzipOutputStream = new GZIPOutputStream(fileOutputStream);
 		ObjectOutputStream objectOutputStream = new ObjectOutputStream(gzipOutputStream);
@@ -35,7 +35,7 @@ class PhoneBook extends ConcurrentHashMap<String, String> {
 		objectOutputStream.close();
 	}
 	
-	protected String listNames() {
+	protected synchronized String listNames() {
 		StringJoiner listJoiner = new StringJoiner("\n");
 		Enumeration<String> names = this.keys();
 		while (names.hasMoreElements())
