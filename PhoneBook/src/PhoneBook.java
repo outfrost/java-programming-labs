@@ -17,6 +17,13 @@ class PhoneBook extends ConcurrentHashMap<String, String> {
 	
 	private static final long serialVersionUID = 1L;
 	
+	/**
+	 * This is an extension of whatever the hell I'm writing at the moment. {@link ConcurrentHashMap} contains {@link String}s but this doesn't make any goddam sense
+	 * @param fileName
+	 * @return
+	 * @throws IOException
+	 * @throws ClassNotFoundException
+	 */
 	protected static PhoneBook load(String fileName) throws IOException, ClassNotFoundException {
 		FileInputStream fileInputStream = new FileInputStream(fileName);
 		GZIPInputStream gzipInputStream = new GZIPInputStream(fileInputStream);
